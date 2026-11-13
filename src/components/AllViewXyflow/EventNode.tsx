@@ -98,6 +98,7 @@ export function EventNode({id: thisNodeId}: NodeProps<XfNode>) {
                                     <div>keywords: [{data.currentData.keywords.join(', ')}]</div>
                                     <div>timeFrom: {data.currentData.timeFrom.toISOString()}</div>
                                     <div>timeTo: {data.currentData.timeTo.toISOString()}</div>
+                                    <div>sourceOrCreated: {data.sourceOrCreated}</div>
                                     <Button disabled={!isEditable} onClick={() => {
                                         nodeDatasStateContext.markNodeForDelete(thisNodeId, !data.isExplicitlyMarkedForDelete)
                                     }}>

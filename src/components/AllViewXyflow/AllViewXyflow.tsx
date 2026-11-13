@@ -1,7 +1,8 @@
 import {useGetHistoryGetall} from "../../gen";
 import {useCallback, useContext, useEffect, useRef, useState} from "react";
 import "@xyflow/react/dist/style.css";
-import {Button, Divider, Flex, Space, Switch} from "antd";
+import "./AllViewXyflow.css";
+import {Button, Card, Divider, Flex, Space, Splitter, type SplitterProps, Switch, Typography} from "antd";
 import {EventNode} from "./EventNode.tsx";
 import type {XfEdge, XfNode} from "./XyFlowTypeAliases.ts";
 import {devDtoEventsAndRelationshipsMock} from "../dev.ts";
@@ -53,25 +54,33 @@ const defaultEdgeOptions = {
 };
 
 type ContextMenuParams = {
-    id : string,
+    id: string,
     top: number,
     left: number,
     onMouseLeave?: () => void,
     xSpawn: number,
     ySpawn: number,
 }
-export function ContextMenu({ id, top, left, onMouseLeave, xSpawn, ySpawn, ...props } : ContextMenuParams) {
+
+export function ContextMenu({id, top, left, onMouseLeave, xSpawn, ySpawn, ...props}: ContextMenuParams) {
     const nodeDatasStateManager = useContext(NodeDatasStateManagerContext)
     const isEditable = useContext(EditableContext)
 
 
     return (
-        <div onMouseLeave={onMouseLeave} style={{ zIndex:1000, left: left, top: top, transform: "translate(-50%, -50%)", position: "absolute", backgroundColor: "chocolate" }} className="context-menu" {...props}>
-            <p style={{ margin: '0.5em' }}>
+        <div onMouseLeave={onMouseLeave} style={{
+            zIndex: 1000,
+            left: left,
+            top: top,
+            transform: "translate(-50%, -50%)",
+            position: "absolute",
+            backgroundColor: "chocolate"
+        }} className="context-menu" {...props}>
+            <p style={{margin: '0.5em'}}>
                 <small>node: {id}</small>
             </p>
-            <button disabled={!isEditable} onClick={()=>{
-                console.log("create, advPos ", {x:xSpawn, y:ySpawn})
+            <button disabled={!isEditable} onClick={() => {
+                console.log("create, advPos ", {x: xSpawn, y: ySpawn})
                 nodeDatasStateManager.addNodeFromCreated({
                     id: crypto.randomUUID(),
                     label: 'default',
@@ -80,9 +89,10 @@ export function ContextMenu({ id, top, left, onMouseLeave, xSpawn, ySpawn, ...pr
                     timeFrom: new Date(),
                     timeTo: new Date(),
                     title: ''
-                }, {x:xSpawn, y:ySpawn})
-                if(onMouseLeave) onMouseLeave()
-            }}>create</button>
+                }, {x: xSpawn, y: ySpawn})
+                if (onMouseLeave) onMouseLeave()
+            }}>create
+            </button>
             {/*<button>delete</button>*/}
         </div>
     );
@@ -109,23 +119,23 @@ function AllViewXyflow() {
         xfNodes: [],
         addXfNode(nodeId: NodeDataIdType) {
             let position = recommendedNodePositionsOnAdd.get(nodeId)
-            if(!position){
+            if (!position) {
                 console.log(98)
                 const nodeData = nodeDatasStateManager.allNodeDatasMap.get(nodeId)
                 console.log('nodeData ', nodeData)
-                if(nodeData){
-                    if(nodeData.advisoryPosition){
+                if (nodeData) {
+                    if (nodeData.advisoryPosition) {
                         position = {x: 0, y: 0}
-                        if(nodeData.advisoryPosition.x){
+                        if (nodeData.advisoryPosition.x) {
                             position.x = nodeData.advisoryPosition.x
                         }
-                        if(nodeData.advisoryPosition.y){
+                        if (nodeData.advisoryPosition.y) {
                             position.y = nodeData.advisoryPosition.y
                         }
                     }
                 }
             }
-            if(!position){
+            if (!position) {
                 console.log(114)
                 position = {x: 0, y: 0}
             }
@@ -272,11 +282,11 @@ function AllViewXyflow() {
     }, [applyXfNodeChanges]);
 
     const reactFlowInstance = useReactFlow()
-    const [viewport, setViewport] = useState<Viewport>({x:0, y: 0, zoom: 1});
+    const [viewport, setViewport] = useState<Viewport>({x: 0, y: 0, zoom: 1});
     const ref = useRef<HTMLDivElement>(null);
-    const [menu, setMenu] = useState<ContextMenuParams|null>(null);
+    const [menu, setMenu] = useState<ContextMenuParams | null>(null);
     const onNodeContextMenu = useCallback(
-        (event : (React.MouseEvent | MouseEvent)) => {
+        (event: (React.MouseEvent | MouseEvent)) => {
             // Prevent native context menu from showing
             event.preventDefault();
             console.log('onNodeContextMenu event ', event)
@@ -290,8 +300,8 @@ function AllViewXyflow() {
             const flowXY = reactFlowInstance.screenToFlowPosition({x: event.pageX, y: event.pageY});
             const menu = {
                 id: "contextMenu1",
-                top: event.pageY-pane.top,
-                left: event.pageX-pane.left,
+                top: event.pageY - pane.top,
+                left: event.pageX - pane.left,
                 //right:  event.screenX-200,
                 //bottom:  event.screenY-200,
                 //xMenu: event.pageX,  //(event.pageX /*- ref.current.getBoundingClientRect().x*/ - ref.current.getBoundingClientRect().width/2 + viewport.x/viewport.zoom),
@@ -311,83 +321,159 @@ function AllViewXyflow() {
 //    nodeDatasStateManager.updatedNodeDataIdsSet
 
     return (
-        <div style={{}}>
-            <Flex vertical style={{alignItems: "center"}}>
-                <div style={{alignItems: "stretch"}}>
-                    <div style={{color: "black", backgroundColor: "white", width: '90vw'}}>
-                        <div style={{height: "70vh"}}>
-                            <EditableContext.Provider value={isEditable}>
-                                <EdgeLabelLayoutProvider>
-                                    <ReactFlow
-                                        ref={ref}
-                                        viewport={viewport}
-                                        onViewportChange={(v) => setViewport(v)}
-                                        nodes={xfNodes as XfNode[]}
-                                        edges={xfEdges as XfEdge[]}
-                                        onNodesChange={onNodesChangeRaf}
-                                        onEdgesChange={applyXfEdgeChanges}
-                                        fitView
-                                        nodeTypes={nodeTypesForXyflow}
-                                        edgeTypes={edgeTypes}
-                                        defaultEdgeOptions={defaultEdgeOptions}
-                                        connectionLineComponent={CustomConnectionLine}
-                                        connectionLineStyle={connectionLineStyle}
-                                        onPaneContextMenu={onNodeContextMenu}
-                                        onPaneClick={onPaneClick}
-                                        onConnectEnd={(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
-                                            console.log('connectionState', connectionState)
-                                            if(connectionState.fromNode && connectionState.toNode) {
-                                                /*queueMicrotask(()=> {*/
-                                                edgeDatasStateManager.addEdgeFromCreated({
-                                                    id: crypto.randomUUID(),
-                                                    label: 'not defined',
-                                                    fromId: connectionState.fromNode.id,
-                                                    toId: connectionState.toNode.id
-                                                })
-                                            /*});*/
-                                            }
-                                        }}
-                                        connectOnClick={false}
-                                    >
-                                        <Controls showInteractive={true}/>
-                                        <Background/>
-                                        {menu && <ContextMenu onClick={onPaneClick} {...menu} onMouseLeave={()=> setMenu(null)} />}
-                                    </ReactFlow>
-                                </EdgeLabelLayoutProvider>
-
-                            </EditableContext.Provider>
+        <Splitter className="all-view-splitter" style={{boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'}}>
+            <Splitter.Panel collapsible={{start: true, end: true, showCollapsibleIcon: true}} min="20%"
+                            defaultSize="100%">
+                <div style={{}}>
+                    <Flex vertical style={{alignItems: "center"}}>
+                        <div style={{alignItems: "stretch"}}>
+                            <div style={{color: "black", backgroundColor: "white"}}>
+                                <div style={{height: "70vh"}}>
+                                    <EditableContext.Provider value={isEditable}>
+                                        <EdgeLabelLayoutProvider>
+                                            <ReactFlow
+                                                ref={ref}
+                                                viewport={viewport}
+                                                onViewportChange={(v) => setViewport(v)}
+                                                nodes={xfNodes as XfNode[]}
+                                                edges={xfEdges as XfEdge[]}
+                                                onNodesChange={onNodesChangeRaf}
+                                                onEdgesChange={applyXfEdgeChanges}
+                                                fitView
+                                                nodeTypes={nodeTypesForXyflow}
+                                                edgeTypes={edgeTypes}
+                                                defaultEdgeOptions={defaultEdgeOptions}
+                                                connectionLineComponent={CustomConnectionLine}
+                                                connectionLineStyle={connectionLineStyle}
+                                                onPaneContextMenu={onNodeContextMenu}
+                                                onPaneClick={onPaneClick}
+                                                onConnectEnd={(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
+                                                    console.log('connectionState', connectionState)
+                                                    if (connectionState.fromNode && connectionState.toNode) {
+                                                        /*queueMicrotask(()=> {*/
+                                                        edgeDatasStateManager.addEdgeFromCreated({
+                                                            id: crypto.randomUUID(),
+                                                            label: 'not defined',
+                                                            fromId: connectionState.fromNode.id,
+                                                            toId: connectionState.toNode.id
+                                                        })
+                                                        /*});*/
+                                                    }
+                                                }}
+                                                connectOnClick={false}
+                                            >
+                                                <Controls showInteractive={true}/>
+                                                <Background/>
+                                                {menu && <ContextMenu onClick={onPaneClick} {...menu}
+                                                                      onMouseLeave={() => setMenu(null)}/>}
+                                            </ReactFlow>
+                                        </EdgeLabelLayoutProvider>
+                                    </EditableContext.Provider>
+                                </div>
+                            </div>
+                            <div style={{
+                                backgroundColor: "white",
+                                color: "black",
+                                position: "relative",
+                                left: 0,
+                                borderTop: "1px solid black",
+                                padding: "10px"
+                            }}>
+                                <Space size={50}>
+                                    <div>editable: <Switch onChange={(checked) => {
+                                        setIsEditable(checked);
+                                    }} checked={isEditable}/></div>
+                                    <Button disabled={!graphHasChanges || !isEditable}>push changes</Button>
+                                </Space>
+                            </div>
+                            <div>
+                                {JSON.stringify(xfEdges)}
+                            </div>
+                            <Divider style={{borderColor: "green"}}/>
+                            <Divider style={{borderColor: "green"}}/>
+                            <Divider style={{borderColor: "green"}}/>
+                            <button onClick={() => getAllQuery.refetch().then(() => console.log("refetched"))}>
+                                update
+                            </button>
+                            <button onClick={() => forceRerender()}>
+                                force rerender
+                            </button>
                         </div>
-                    </div>
-                    <div style={{
-                        backgroundColor: "white",
-                        color: "black",
-                        position: "relative",
-                        left: 0,
-                        borderTop: "1px solid black",
-                        padding: "10px"
-                    }}>
-                        <Space size={50}>
-                            <div>editable: <Switch onChange={(checked) => {
-                                setIsEditable(checked);
-                            }} checked={isEditable}/></div>
-                            <Button disabled={!graphHasChanges || !isEditable}>push changes</Button>
-                        </Space>
-                    </div>
-                    <div>
-                        {JSON.stringify(xfEdges)}
-                    </div>
-                    <Divider style={{borderColor: "green"}}/>
-                    <Divider style={{borderColor: "green"}}/>
-                    <Divider style={{borderColor: "green"}}/>
-                    <button onClick={() => getAllQuery.refetch().then(() => console.log("refetched"))}>
-                        update
-                    </button>
-                    <button onClick={()=>forceRerender()}>
-                        force rerender
-                    </button>
+                    </Flex>
                 </div>
-            </Flex>
-        </div>
+            </Splitter.Panel>
+            <Splitter.Panel collapsible>
+                <div style={{color:'white'}}>
+                    <Card title="Nodes">
+                        <Card title="Created">
+                            {
+                                Array.from(nodeDatasStateManager.createdNodeDataIdsSet).map((nId, idx) =>
+                                    <div key={idx}>
+                                        {nId}
+                                    </div>)
+                            }
+                        </Card>
+
+                        <Card title="Updated">
+                            {
+                                Array.from(nodeDatasStateManager.updatedNodeDataIdsSet).map((nId, idx) =>
+                                    <div key={idx}>
+                                        {nId}
+                                    </div>)
+                            }
+                        </Card>
+
+                        <Card title="Marked for delete">
+                            {
+                                Array.from(nodeDatasStateManager.markedForDeleteNodeDataIdsSet).map((nId, idx) =>
+                                    <div key={idx}>
+                                        {nId}
+                                    </div>)
+                            }
+                        </Card>
+                    </Card>
+                    <br/>
+                    <Card title="Edges">
+                        <Card title="Created">
+                            {
+                                Array.from(edgeDatasStateManager.allEdgeDatasMap.values()).filter((v) => v.sourceOrCreated === "created").map((data, idx) =>
+                                    <div key={idx}>
+                                        {data.sourceData.id}
+                                    </div>)
+                            }
+                        </Card>
+
+                        <Card title="Updated">
+                            {
+                                Array.from(edgeDatasStateManager.allEdgeDatasMap.values()).filter((v) => v.sourceOrCreated !== "created" && v.updatedData).map((data, idx) =>
+                                    <div key={idx}>
+                                        {data.sourceData.id}
+                                    </div>)
+                            }
+                        </Card>
+
+                        <Card title="Explicitly marked for delete">
+                            {
+                                Array.from(edgeDatasStateManager.allEdgeDatasMap.values()).filter((v) => v.isExplicitlyMarkedForDelete).map((data, idx) =>
+                                    <div key={idx}>
+                                        {data.sourceData.id}
+                                    </div>)
+                            }
+                        </Card>
+
+                        <Card title="Implicitly will be deleted becouse nodes">
+                            ну наверно ошибки при добавлении внутри edgeDatasStateManager
+                            {
+                                Array.from(edgeDatasStateManager.allEdgeDatasMap.values()).filter((v) => v.markedForDeleteBecauseNodes).map((data, idx) =>
+                                    <div key={idx}>
+                                        {data.sourceData.id}
+                                    </div>)
+                            }
+                        </Card>
+                    </Card>
+                </div>
+            </Splitter.Panel>
+        </Splitter>
     );
 }
 
